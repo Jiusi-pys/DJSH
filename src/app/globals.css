@@ -1,0 +1,360 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Modern Professional Color Palette */
+    --background: 220 14% 96%;
+    --foreground: 224 71% 4%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 224 71% 4%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 224 71% 4%;
+
+    /* Primary: Modern Indigo */
+    --primary: 239 84% 67%;
+    --primary-foreground: 0 0% 100%;
+
+    /* Secondary: Soft Gray */
+    --secondary: 220 14% 96%;
+    --secondary-foreground: 224 71% 4%;
+
+    /* Muted */
+    --muted: 220 14% 96%;
+    --muted-foreground: 220 9% 46%;
+
+    /* Accent: Teal */
+    --accent: 173 80% 40%;
+    --accent-foreground: 0 0% 100%;
+
+    /* Destructive */
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    /* Success */
+    --success: 142 76% 36%;
+    --success-foreground: 0 0% 100%;
+
+    /* Warning */
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
+
+    /* Border & Input */
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 239 84% 67%;
+
+    --radius: 0.75rem;
+
+    /* Sidebar */
+    --sidebar-background: 224 71% 4%;
+    --sidebar-foreground: 220 14% 96%;
+    --sidebar-muted: 220 9% 20%;
+    --sidebar-accent: 239 84% 67%;
+  }
+
+  .dark {
+    --background: 224 71% 4%;
+    --foreground: 220 14% 96%;
+
+    --card: 220 20% 8%;
+    --card-foreground: 220 14% 96%;
+
+    --popover: 220 20% 8%;
+    --popover-foreground: 220 14% 96%;
+
+    --primary: 239 84% 67%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 220 20% 15%;
+    --secondary-foreground: 220 14% 96%;
+
+    --muted: 220 20% 15%;
+    --muted-foreground: 220 9% 60%;
+
+    --accent: 173 80% 40%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 62% 30%;
+    --destructive-foreground: 0 0% 100%;
+
+    --success: 142 76% 36%;
+    --success-foreground: 0 0% 100%;
+
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
+
+    --border: 220 20% 18%;
+    --input: 220 20% 18%;
+    --ring: 239 84% 67%;
+
+    --sidebar-background: 220 20% 6%;
+    --sidebar-foreground: 220 14% 96%;
+    --sidebar-muted: 220 20% 15%;
+    --sidebar-accent: 239 84% 67%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+
+  /* Better heading hierarchy */
+  h1, h2, h3, h4, h5, h6 {
+    @apply tracking-tight font-semibold;
+  }
+}
+
+@layer components {
+  /* Modern Card Styles */
+  .card-glass {
+    @apply bg-card/80 backdrop-blur-xl border border-border/50 shadow-sm;
+  }
+
+  .card-elevated {
+    @apply bg-card shadow-lg shadow-black/5 border-0;
+  }
+
+  /* Gradient text */
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent;
+  }
+
+  /* Stat card hover effect */
+  .stat-card {
+    @apply transition-all duration-300 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5;
+  }
+
+  /* Data table row hover */
+  .data-row {
+    @apply transition-colors hover:bg-muted/50;
+  }
+
+  /* Modern button variants */
+  .btn-gradient {
+    @apply bg-gradient-to-r from-primary to-primary/80 text-primary-foreground hover:opacity-90 transition-opacity;
+  }
+
+  /* Sidebar styles */
+  .sidebar {
+    @apply bg-[hsl(var(--sidebar-background))] text-[hsl(var(--sidebar-foreground))];
+  }
+
+  .sidebar-item {
+    @apply flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-all duration-200;
+  }
+
+  .sidebar-item-active {
+    @apply bg-[hsl(var(--sidebar-accent))] text-white shadow-lg shadow-primary/25;
+  }
+
+  .sidebar-item-inactive {
+    @apply text-[hsl(var(--sidebar-foreground))]/70 hover:text-[hsl(var(--sidebar-foreground))] hover:bg-[hsl(var(--sidebar-muted))];
+  }
+
+  /* Badge variants */
+  .badge-success {
+    @apply bg-success/10 text-success border-success/20;
+  }
+
+  .badge-warning {
+    @apply bg-warning/10 text-warning border-warning/20;
+  }
+
+  .badge-danger {
+    @apply bg-destructive/10 text-destructive border-destructive/20;
+  }
+
+  /* Chart container */
+  .chart-container {
+    @apply bg-gradient-to-br from-primary/5 to-transparent p-4 rounded-xl;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground) / 0.2);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.4);
+}
+
+/* Smooth animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(-10px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.3s ease-out;
+}
+
+.animate-slideIn {
+  animation: slideIn 0.3s ease-out;
+}
+
+/* Number animation */
+@keyframes countUp {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Pulse animation for alerts */
+@keyframes pulse-ring {
+  0% { transform: scale(0.8); opacity: 1; }
+  100% { transform: scale(1.4); opacity: 0; }
+}
+
+.pulse-dot::before {
+  content: '';
+  @apply absolute inset-0 rounded-full;
+  animation: pulse-ring 1.5s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+  background: inherit;
+}
+
+/* Image viewer styles */
+.image-viewer-container {
+  @apply relative overflow-hidden bg-muted rounded-xl;
+}
+
+.image-viewer-controls {
+  @apply absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 bg-background/90 backdrop-blur-sm rounded-lg p-2 shadow-lg;
+}
+
+.image-viewer-controls button {
+  @apply p-2 hover:bg-secondary rounded-md transition-colors;
+}
+
+/* Table improvements */
+.table-modern th {
+  @apply text-xs uppercase tracking-wider text-muted-foreground font-medium;
+}
+
+.table-modern td {
+  @apply py-4;
+}
+
+/* Input focus states */
+input:focus, select:focus, textarea:focus {
+  @apply ring-2 ring-primary/20 border-primary;
+}
+
+/* Selection */
+::selection {
+  @apply bg-primary/20 text-foreground;
+}
+
+/* ==================== */
+/* Mobile Responsive    */
+/* ==================== */
+
+/* iPhone specific (max-width: 430px for iPhone 14/15 Pro Max) */
+@media (max-width: 430px) {
+  /* Full-width buttons on mobile */
+  .mobile-full-btn {
+    @apply w-full;
+  }
+
+  /* Smaller padding on mobile */
+  .mobile-compact {
+    @apply p-3;
+  }
+
+  /* Stack horizontal items */
+  .mobile-stack {
+    @apply flex-col;
+  }
+
+  /* Hide on mobile */
+  .mobile-hide {
+    @apply hidden;
+  }
+
+  /* Mobile card styling */
+  .mobile-card {
+    @apply rounded-none border-x-0;
+  }
+}
+
+/* Tablet specific (iPad 12.9" is around 1024px in portrait) */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .tablet-2col {
+    @apply grid-cols-2;
+  }
+}
+
+/* Touch-friendly tap targets */
+@media (pointer: coarse) {
+  .touch-target {
+    @apply min-h-[44px] min-w-[44px];
+  }
+
+  /* Larger buttons for touch */
+  button, [role="button"] {
+    @apply min-h-[40px];
+  }
+}
+
+/* Safe area for notched devices */
+@supports (padding: max(0px)) {
+  .safe-area-bottom {
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  }
+
+  .safe-area-top {
+    padding-top: max(0px, env(safe-area-inset-top));
+  }
+}
+
+/* Mobile table styles - card layout on small screens */
+@media (max-width: 640px) {
+  .responsive-table {
+    @apply block;
+  }
+
+  .responsive-table thead {
+    @apply hidden;
+  }
+
+  .responsive-table tbody {
+    @apply block space-y-3;
+  }
+
+  .responsive-table tr {
+    @apply block border rounded-lg p-4 bg-card;
+  }
+
+  .responsive-table td {
+    @apply block p-1 text-sm;
+  }
+
+  .responsive-table td::before {
+    content: attr(data-label);
+    @apply font-medium text-muted-foreground mr-2;
+  }
+}
