@@ -1,6 +1,7 @@
 # ===========================================
 # DJSH Finance App - Frontend Dockerfile
 # Multi-stage production build for Next.js 14
+# Security hardened for production deployment
 # ===========================================
 
 # -------------------------------------------
@@ -45,13 +46,23 @@ RUN npm run build
 FROM node:20-alpine AS runner
 WORKDIR /app
 
+# Security labels
+LABEL org.opencontainers.image.title="DJSH Frontend" \
+      org.opencontainers.image.description="Next.js frontend for DJSH Finance App" \
+      org.opencontainers.image.vendor="DJSH" \
+      security.privileged="false" \
+      security.allowPrivilegeEscalation="false"
+
 # Set production environment
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
-# Create non-root user for security
+# Security hardening: Remove setuid/setgid binaries to prevent privilege escalation
+RUN find / -perm /6000 -type f -exec chmod a-s {} \; 2>/dev/null || true
+
+# Create non-root user for security with explicit home directory
 RUN addgroup --system --gid 1001 nodejs && \
-    adduser --system --uid 1001 nextjs
+    adduser --system --uid 1001 --home /app nextjs
 
 # Copy necessary files from builder
 # Note: Requires 'output: standalone' in next.config.js
@@ -62,7 +73,7 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 # Switch to non-root user
 USER nextjs
 
-# Expose port
+# Expose port (documentation only, actual binding done in docker-compose)
 EXPOSE 3000
 
 # Set hostname for container

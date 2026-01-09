@@ -86,6 +86,32 @@ function getNumber(envKey, configPath, defaultValue = 0) {
 }
 
 /**
+ * Get a secret value from file or environment variable
+ * Docker secrets are mounted as files at /run/secrets/<name>
+ * @param {string} envKey - Environment variable name for the value
+ * @param {string} fileEnvKey - Environment variable name for the file path (e.g., DB_PASSWORD_FILE)
+ * @param {string} configPath - Dot-notation path in config.json
+ * @param {*} defaultValue - Default value if not found
+ */
+function getSecret(envKey, fileEnvKey, configPath, defaultValue = '') {
+  // First, try to read from file if _FILE env var is set
+  const filePath = process.env[fileEnvKey];
+  if (filePath) {
+    try {
+      if (fs.existsSync(filePath)) {
+        const secret = fs.readFileSync(filePath, 'utf8').trim();
+        return secret;
+      }
+    } catch (error) {
+      console.warn(`Failed to read secret from ${filePath}:`, error.message);
+    }
+  }
+
+  // Fall back to regular environment variable or config
+  return get(envKey, configPath, defaultValue);
+}
+
+/**
  * Get entire configuration object
  */
 function getAll() {
@@ -96,6 +122,7 @@ module.exports = {
   get,
   getBoolean,
   getNumber,
+  getSecret,
   getAll,
 
   // Pre-loaded configuration values for convenience
@@ -122,12 +149,14 @@ module.exports = {
     get port() { return getNumber('DB_PORT', 'database.port', 3306); },
     get name() { return get('DB_NAME', 'database.name', 'djsh_finance_db'); },
     get user() { return get('DB_USER', 'database.user', 'root'); },
-    get password() { return get('DB_PASSWORD', 'database.password', ''); }
+    // Password can be read from Docker secret file or env var
+    get password() { return getSecret('DB_PASSWORD', 'DB_PASSWORD_FILE', 'database.password', ''); }
   },
 
   jwt: {
-    get accessSecret() { return get('JWT_ACCESS_SECRET', 'jwt.accessSecret', ''); },
-    get refreshSecret() { return get('JWT_REFRESH_SECRET', 'jwt.refreshSecret', ''); },
+    // JWT secrets can be read from Docker secret files or env vars
+    get accessSecret() { return getSecret('JWT_ACCESS_SECRET', 'JWT_ACCESS_SECRET_FILE', 'jwt.accessSecret', ''); },
+    get refreshSecret() { return getSecret('JWT_REFRESH_SECRET', 'JWT_REFRESH_SECRET_FILE', 'jwt.refreshSecret', ''); },
     get accessExpiresIn() { return get('JWT_ACCESS_EXPIRES', 'jwt.accessExpiresIn', '8h'); },
     get refreshExpiresIn() { return get('JWT_REFRESH_EXPIRES', 'jwt.refreshExpiresIn', '30d'); }
   },

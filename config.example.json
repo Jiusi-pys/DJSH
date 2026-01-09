@@ -54,5 +54,49 @@
       "backend": 8080,
       "frontend": 3000
     }
+  },
+  "swarm": {
+    "enabled": false,
+    "stackName": "djsh",
+    "registry": {
+      "url": "127.0.0.1:5000",
+      "useLocal": true
+    },
+    "replicas": {
+      "frontend": 2,
+      "backend": 2
+    },
+    "resources": {
+      "frontend": {
+        "limits": { "cpus": "1", "memory": "512M" },
+        "reservations": { "cpus": "0.25", "memory": "128M" }
+      },
+      "backend": {
+        "limits": { "cpus": "1", "memory": "512M" },
+        "reservations": { "cpus": "0.25", "memory": "128M" }
+      }
+    },
+    "updateConfig": {
+      "parallelism": 1,
+      "delay": "10s",
+      "failureAction": "rollback",
+      "monitor": "30s",
+      "maxFailureRatio": 0.1,
+      "order": "start-first"
+    },
+    "rollbackConfig": {
+      "parallelism": 1,
+      "delay": "5s",
+      "failureAction": "pause",
+      "monitor": "30s",
+      "maxFailureRatio": 0,
+      "order": "stop-first"
+    },
+    "restartPolicy": {
+      "condition": "on-failure",
+      "delay": "5s",
+      "maxAttempts": 3,
+      "window": "120s"
+    }
   }
 }
