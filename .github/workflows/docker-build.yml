@@ -257,9 +257,9 @@ jobs:
       matrix:
         image:
           - name: frontend
-            ref: ${{ needs.build-frontend.outputs.tags }}
+            image: ${{ secrets.DOCKERHUB_USERNAME }}/djsh-frontend:latest
           - name: backend
-            ref: ${{ needs.build-backend.outputs.tags }}
+            image: ${{ secrets.DOCKERHUB_USERNAME }}/djsh-backend:latest
 
     steps:
       - name: Checkout repository
@@ -274,18 +274,10 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Extract first tag
-        id: extract-tag
-        run: |
-          FULL_TAGS="${{ matrix.image.ref }}"
-          FIRST_TAG=$(echo "$FULL_TAGS" | head -n 1)
-          echo "tag=$FIRST_TAG" >> $GITHUB_OUTPUT
-          echo "Scanning image: $FIRST_TAG"
-
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@0.24.0
         with:
-          image-ref: ${{ steps.extract-tag.outputs.tag }}
+          image-ref: ${{ matrix.image.image }}
           format: 'sarif'
           output: 'trivy-results-${{ matrix.image.name }}.sarif'
           severity: 'CRITICAL,HIGH'
@@ -302,7 +294,7 @@ jobs:
       - name: Run Trivy in table format
         uses: aquasecurity/trivy-action@0.24.0
         with:
-          image-ref: ${{ steps.extract-tag.outputs.tag }}
+          image-ref: ${{ matrix.image.image }}
           format: 'table'
           severity: 'CRITICAL,HIGH'
           exit-code: '1'
@@ -313,7 +305,7 @@ jobs:
         run: |
           echo "### Security Scan: ${{ matrix.image.name }} 🔒" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Image:** \`${{ steps.extract-tag.outputs.tag }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Image:** \`${{ matrix.image.image }}\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           if [ "${{ job.status }}" == "success" ]; then
             echo "✅ No HIGH or CRITICAL vulnerabilities found" >> $GITHUB_STEP_SUMMARY
