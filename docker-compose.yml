@@ -1,0 +1,134 @@
+# ===========================================
+# DJSH Finance App - Docker Compose Configuration
+# Configuration is read from .env (generated from config.json)
+# Run: node scripts/docker-setup.js to generate .env
+# ===========================================
+
+services:
+  # ===========================================
+  # MySQL 8.0 Database
+  # ===========================================
+  mysql:
+    image: mysql:8.0
+    container_name: ${MYSQL_CONTAINER:-djsh-mysql}
+    hostname: ${MYSQL_CONTAINER:-djsh-mysql}
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      TZ: ${TZ:-Asia/Shanghai}
+    ports:
+      # Bind to external host (0.0.0.0) for external access
+      - "${EXTERNAL_HOST:-0.0.0.0}:${MYSQL_PORT_EXTERNAL:-3306}:3306"
+    volumes:
+      - ${MYSQL_VOLUME:-djsh-mysql-data}:/var/lib/mysql
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+      - ./database/migrations/001_add_users_table.sql:/docker-entrypoint-initdb.d/02-users.sql:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    networks:
+      djsh-network:
+        aliases:
+          - mysql
+          - ${MYSQL_CONTAINER:-djsh-mysql}
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --default-authentication-plugin=mysql_native_password
+
+  # ===========================================
+  # Express.js Backend API
+  # ===========================================
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: ${BACKEND_CONTAINER:-djsh-backend}
+    hostname: ${BACKEND_CONTAINER:-djsh-backend}
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+      PORT: ${BACKEND_PORT:-8080}
+      HOST: ${BACKEND_HOST:-0.0.0.0}
+      # Use internal container name for database connection
+      DB_HOST: ${MYSQL_CONTAINER:-djsh-mysql}
+      FRONTEND_URL: ${CORS_ORIGINS:-http://localhost:3000}
+    volumes:
+      - ./config.json:/app/config.json:ro
+    ports:
+      # Bind to external host (0.0.0.0) for external access
+      - "${EXTERNAL_HOST:-0.0.0.0}:${BACKEND_PORT_EXTERNAL:-8080}:${BACKEND_PORT:-8080}"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:${BACKEND_PORT:-8080}/lookups/version"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 15s
+    networks:
+      djsh-network:
+        aliases:
+          - backend
+          - ${BACKEND_CONTAINER:-djsh-backend}
+
+  # ===========================================
+  # Next.js Frontend
+  # ===========================================
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        # External API URL for browser requests
+        NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-http://localhost:8080}
+    container_name: ${FRONTEND_CONTAINER:-djsh-frontend}
+    hostname: ${FRONTEND_CONTAINER:-djsh-frontend}
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      HOSTNAME: ${FRONTEND_HOST:-0.0.0.0}
+      PORT: ${FRONTEND_PORT:-3000}
+      # Internal API URL for server-side rendering
+      INTERNAL_API_URL: ${INTERNAL_API_URL:-http://djsh-backend:8080}
+    ports:
+      # Bind to external host (0.0.0.0) for external access
+      - "${EXTERNAL_HOST:-0.0.0.0}:${FRONTEND_PORT_EXTERNAL:-3000}:${FRONTEND_PORT:-3000}"
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:${FRONTEND_PORT:-3000}/"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 10s
+    networks:
+      djsh-network:
+        aliases:
+          - frontend
+          - ${FRONTEND_CONTAINER:-djsh-frontend}
+
+# ===========================================
+# Networks - User-defined bridge for DNS resolution
+# ===========================================
+networks:
+  djsh-network:
+    driver: bridge
+    name: ${DOCKER_NETWORK:-djsh-network}
+    ipam:
+      driver: default
+
+# ===========================================
+# Volumes
+# ===========================================
+volumes:
+  djsh-mysql-data:
+    name: ${MYSQL_VOLUME:-djsh-mysql-data}

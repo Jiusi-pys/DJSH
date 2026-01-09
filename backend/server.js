@@ -1,17 +1,20 @@
 /**
  * Server startup file
  * Handles HTTP/HTTPS server creation and startup
+ * Uses centralized configuration from config.json
  */
 
 const https = require('https');
 const fs = require('fs');
 const path = require('path');
-require('dotenv').config();
 
 const app = require('./app');
+// Use explicit path to avoid conflict with mounted config.json
+const config = require('./config/index');
 
-const PORT = process.env.PORT || 8080;
-const ENABLE_HTTPS = process.env.ENABLE_HTTPS === 'true';
+const HOST = config.server.host;
+const PORT = config.server.port;
+const ENABLE_HTTPS = config.https.enabled;
 
 /**
  * Print available API endpoints
@@ -49,8 +52,8 @@ function printEndpoints() {
 function startServer() {
   if (ENABLE_HTTPS) {
     // HTTPS mode
-    const certPath = process.env.TLS_CERT_PATH || './certs/server.crt';
-    const keyPath = process.env.TLS_KEY_PATH || './certs/server.key';
+    const certPath = config.https.certPath;
+    const keyPath = config.https.keyPath;
 
     try {
       const options = {
@@ -58,8 +61,8 @@ function startServer() {
         key: fs.readFileSync(path.resolve(__dirname, keyPath)),
       };
 
-      https.createServer(options, app).listen(PORT, '0.0.0.0', () => {
-        console.log(`🔒 后端 API 服务运行在 https://0.0.0.0:${PORT} (HTTPS 已启用)`);
+      https.createServer(options, app).listen(PORT, HOST, () => {
+        console.log(`🔒 后端 API 服务运行在 https://${HOST}:${PORT} (HTTPS 已启用)`);
         console.log(`   证书: ${certPath}`);
         printEndpoints();
       });
@@ -70,9 +73,9 @@ function startServer() {
     }
   } else {
     // HTTP mode (development)
-    app.listen(PORT, '0.0.0.0', () => {
-      console.log(`后端 API 服务运行在 http://0.0.0.0:${PORT}`);
-      console.log('提示: 设置 ENABLE_HTTPS=true 启用 HTTPS 加密传输');
+    app.listen(PORT, HOST, () => {
+      console.log(`后端 API 服务运行在 http://${HOST}:${PORT}`);
+      console.log('提示: 设置 backend.https.enabled=true 启用 HTTPS 加密传输');
       printEndpoints();
     });
   }

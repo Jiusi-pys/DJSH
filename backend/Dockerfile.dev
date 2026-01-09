@@ -1,0 +1,35 @@
+# ===========================================
+# DJSH Finance App - Backend Development Dockerfile
+# Hot reloading enabled with nodemon
+# ===========================================
+
+FROM node:20-alpine
+WORKDIR /app
+
+# Install dependencies for native modules (bcrypt)
+RUN apk add --no-cache python3 make g++ libc6-compat
+
+# Copy package files
+COPY package.json package-lock.json* ./
+
+# Install all dependencies
+RUN npm install
+
+# Install nodemon globally for hot reloading
+RUN npm install -g nodemon
+
+# Copy source code
+COPY . .
+
+# Create uploads directory
+RUN mkdir -p uploads
+
+# Environment
+ENV NODE_ENV=development
+
+# Expose port
+EXPOSE 8080
+
+# Start with nodemon for hot reloading
+# Watches all .js and .json files for changes
+CMD ["nodemon", "--watch", ".", "--ext", "js,json", "--ignore", "node_modules/", "server.js"]
