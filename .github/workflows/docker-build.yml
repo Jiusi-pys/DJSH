@@ -63,7 +63,7 @@ jobs:
 
       - name: Validate swarm compose
         run: |
-          docker compose -f docker-compose.swarm.yml config > /dev/null
+          docker compose -f docker/compose/docker-compose.swarm.yml config > /dev/null
           echo "✅ Swarm compose file is valid"
 
   # ===========================================
