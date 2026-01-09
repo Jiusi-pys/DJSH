@@ -183,16 +183,9 @@ export interface CashTransactionsResponse {
 export interface DashboardStats {
   todaySales: { amount: number; count: number };
   yesterdaySales: number;
-  monthSales: { amount: number; count: number };
-  lastMonthSales: number;
-  monthPurchase: { amount: number; count: number };
-  orderStats: { pending: number; verified: number; cancelled: number };
-  cashFlow: { income: number; expense: number; net: number };
+  pendingOrders: number;
   totalCustomers: number;
   totalProducts: number;
-  salesTrend: { date: string; amount: number; count: number }[];
-  topProducts: { name: string; quantity: number; amount: number }[];
-  topCustomers: { name: string; orderCount: number; amount: number }[];
   recentOrders: OrderSummary[];
 }
 

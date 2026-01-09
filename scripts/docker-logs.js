@@ -1,1 +1,0 @@
-../docker/scripts/docker-logs.js

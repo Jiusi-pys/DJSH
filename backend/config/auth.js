@@ -1,23 +1,19 @@
 /**
  * 认证配置模块
  * 包含 JWT、密码策略、登录限制等配置
- * 使用集中式配置 (config.json)
  */
-
-// Use explicit path to avoid conflict with mounted config.json
-const centralConfig = require('./index.js');
 
 const config = {
   // JWT 配置
   jwt: {
-    // 访问令牌密钥 (从 config.json 或环境变量读取)
-    accessSecret: centralConfig.jwt.accessSecret || 'djsh-access-secret-key-change-in-production',
+    // 访问令牌密钥 (生产环境应使用环境变量)
+    accessSecret: process.env.JWT_ACCESS_SECRET || 'djsh-access-secret-key-change-in-production',
     // 刷新令牌密钥
-    refreshSecret: centralConfig.jwt.refreshSecret || 'djsh-refresh-secret-key-change-in-production',
-    // 访问令牌过期时间
-    accessExpiresIn: centralConfig.jwt.accessExpiresIn || '8h',
-    // 刷新令牌过期时间
-    refreshExpiresIn: centralConfig.jwt.refreshExpiresIn || '30d',
+    refreshSecret: process.env.JWT_REFRESH_SECRET || 'djsh-refresh-secret-key-change-in-production',
+    // 访问令牌过期时间 (8小时)
+    accessExpiresIn: '8h',
+    // 刷新令牌过期时间 (30天)
+    refreshExpiresIn: '30d',
     // 刷新令牌过期毫秒数 (用于数据库存储)
     refreshExpiresMs: 30 * 24 * 60 * 60 * 1000,
     // 令牌签发者

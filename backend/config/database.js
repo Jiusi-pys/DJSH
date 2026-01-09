@@ -1,22 +1,16 @@
-/**
- * Database Configuration
- * Uses centralized config from config.json
- */
-
 const mysql = require('mysql2/promise');
-// Use explicit path to avoid conflict with mounted config.json
-const config = require('./index.js');
+require('dotenv').config();
 
 let pool;
 
 function getPool() {
     if (!pool) {
         pool = mysql.createPool({
-            host: config.database.host,
-            port: config.database.port,
-            user: config.database.user,
-            password: config.database.password,
-            database: config.database.name,
+            host: process.env.DB_HOST || 'localhost',
+            port: process.env.DB_PORT || 3306,
+            user: process.env.DB_USER || 'root',
+            password: process.env.DB_PASSWORD || '',
+            database: process.env.DB_NAME || 'djsh_finance_db',
             waitForConnections: true,
             connectionLimit: 10,
             queueLimit: 0

@@ -9,7 +9,6 @@
 - [认证和安全](#认证和安全)
 - [环境配置](#环境配置)
 - [部署教程](#部署教程)
-- [CI/CD 流程](#cicd-流程)
 - [API 文档](#api-文档)
 - [常见问题](#常见问题)
 
@@ -673,64 +672,6 @@ pm2 delete djsh-backend djsh-frontend
 pm2 startup
 pm2 save
 ```
-
----
-
-## CI/CD 流程
-
-![Docker Build](https://github.com/jiusi/DJSH/actions/workflows/docker-build.yml/badge.svg)
-
-本项目使用 GitHub Actions 自动化构建和部署 Docker 镜像。每当代码推送到 `main` 或 `jiusi` 分支时，工作流会自动：
-
-1. **验证** - 检查 Docker Compose 配置文件的有效性
-2. **构建** - 为前端和后端构建多平台镜像 (amd64 + arm64)
-3. **推送** - 将镜像推送到 Docker Hub
-4. **扫描** - 使用 Trivy 进行安全漏洞扫描
-5. **总结** - 生成部署指令和构建摘要
-
-### 工作流特性
-
-- ✅ **多平台构建** - 支持 Linux AMD64 和 ARM64 架构
-- ✅ **安全扫描** - Trivy 检测 HIGH 和 CRITICAL 级别的漏洞
-- ✅ **层缓存** - GitHub Actions 缓存加速后续构建
-- ✅ **镜像标签** - 自动生成 `latest`、分支名和提交 SHA 标签
-- ✅ **并发控制** - 同一分支只允许一个构建任务运行
-
-### 镜像信息
-
-所有镜像推送到 Docker Hub：
-
-```
-docker.io/<username>/djsh-frontend:<tag>
-docker.io/<username>/djsh-backend:<tag>
-```
-
-**标签策略**：
-- `latest` - 最新版本（仅来自 main/jiusi）
-- `<branch>` - 分支名称（如 `jiusi`）
-- `<branch>-<sha>` - 分支名加提交哈希（可追踪具体版本）
-
-### 快速部署
-
-构建完成后，使用新镜像部署：
-
-```bash
-# 拉取最新镜像
-docker pull <username>/djsh-frontend:latest
-docker pull <username>/djsh-backend:latest
-
-# 部署
-docker compose up -d
-```
-
-### 更多信息
-
-详见 [docs/CI-CD.md](docs/CI-CD.md) 获取完整的：
-- 工作流架构详解
-- 故障排除指南
-- 性能预期
-- 安全扫描配置
-- 部署验证步骤
 
 ---
 
