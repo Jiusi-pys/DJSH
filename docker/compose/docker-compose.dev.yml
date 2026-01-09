@@ -1,0 +1,55 @@
+# ===========================================
+# DJSH Finance App - Development Overrides
+# Use with: docker-compose -f docker-compose.yml -f docker-compose.dev.yml up
+# ===========================================
+
+services:
+  # ===========================================
+  # MySQL - Development settings
+  # ===========================================
+  mysql:
+    # Expose port for local database tools (MySQL Workbench, etc.)
+    ports:
+      - "3306:3306"
+
+  # ===========================================
+  # Backend - Development mode with hot reload
+  # ===========================================
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    environment:
+      NODE_ENV: development
+    volumes:
+      # Mount source code for hot reloading
+      - ./backend:/app
+      # Prevent overwriting node_modules from container
+      - /app/node_modules
+    # Override production command with nodemon
+    command: nodemon --watch . --ext js,json --ignore node_modules/ server.js
+
+  # ===========================================
+  # Frontend - Development mode with hot reload
+  # ===========================================
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    environment:
+      NODE_ENV: development
+      # Use localhost for development (browser access)
+      NEXT_PUBLIC_API_BASE_URL: http://localhost:8080
+    volumes:
+      # Mount source code for hot reloading
+      - ./src:/app/src
+      - ./public:/app/public
+      - ./next.config.js:/app/next.config.js
+      - ./tailwind.config.ts:/app/tailwind.config.ts
+      - ./postcss.config.js:/app/postcss.config.js
+      - ./tsconfig.json:/app/tsconfig.json
+      # Prevent overwriting node_modules and .next from container
+      - /app/node_modules
+      - /app/.next
+    # Override production command with next dev
+    command: npm run dev
