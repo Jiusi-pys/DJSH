@@ -13,6 +13,13 @@ services:
     container_name: ${MYSQL_CONTAINER:-djsh-mysql}
     hostname: ${MYSQL_CONTAINER:-djsh-mysql}
     restart: unless-stopped
+    logging:
+      driver: ${LOG_DRIVER:-json-file}
+      options:
+        max-size: ${LOG_MAX_SIZE:-10m}
+        max-file: ${LOG_MAX_FILE:-5}
+        labels: "service,environment"
+        tag: "{{.Name}}/{{.ID}}"
     environment:
       TZ: ${TZ:-Asia/Shanghai}
       # Use _FILE suffix to read passwords from secrets
@@ -65,6 +72,13 @@ services:
     container_name: ${BACKEND_CONTAINER:-djsh-backend}
     hostname: ${BACKEND_CONTAINER:-djsh-backend}
     restart: unless-stopped
+    logging:
+      driver: ${LOG_DRIVER:-json-file}
+      options:
+        max-size: ${LOG_MAX_SIZE:-10m}
+        max-file: ${LOG_MAX_FILE:-5}
+        labels: "service,environment"
+        tag: "{{.Name}}/{{.ID}}"
     environment:
       NODE_ENV: production
       PORT: ${BACKEND_PORT:-8080}
@@ -122,6 +136,13 @@ services:
     container_name: ${FRONTEND_CONTAINER:-djsh-frontend}
     hostname: ${FRONTEND_CONTAINER:-djsh-frontend}
     restart: unless-stopped
+    logging:
+      driver: ${LOG_DRIVER:-json-file}
+      options:
+        max-size: ${LOG_MAX_SIZE:-10m}
+        max-file: ${LOG_MAX_FILE:-5}
+        labels: "service,environment"
+        tag: "{{.Name}}/{{.ID}}"
     environment:
       NODE_ENV: production
       HOSTNAME: ${FRONTEND_HOST:-0.0.0.0}

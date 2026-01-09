@@ -120,6 +120,18 @@ const DEFAULT_CONFIG = {
       maxAttempts: 3,
       window: "120s"
     }
+  },
+  logging: {
+    driver: "json-file",
+    options: {
+      maxSize: "10m",
+      maxFile: "5",
+      compress: "true"
+    },
+    export: {
+      directory: "logs",
+      retentionDays: 30
+    }
   }
 };
 
@@ -301,6 +313,14 @@ function generateEnv(config) {
     `BACKEND_MEM_LIMIT=${config.swarm?.resources?.backend?.limits?.memory || '512M'}`,
     `BACKEND_CPU_RESERVE=${config.swarm?.resources?.backend?.reservations?.cpus || '0.25'}`,
     `BACKEND_MEM_RESERVE=${config.swarm?.resources?.backend?.reservations?.memory || '128M'}`,
+    '',
+    '# ===== Logging =====',
+    `LOG_DRIVER=${config.logging?.driver || 'json-file'}`,
+    `LOG_MAX_SIZE=${config.logging?.options?.maxSize || '10m'}`,
+    `LOG_MAX_FILE=${config.logging?.options?.maxFile || '5'}`,
+    `LOG_COMPRESS=${config.logging?.options?.compress || 'true'}`,
+    `LOG_EXPORT_DIR=${config.logging?.export?.directory || 'logs'}`,
+    `LOG_RETENTION_DAYS=${config.logging?.export?.retentionDays || 30}`,
     ''
   ];
 
