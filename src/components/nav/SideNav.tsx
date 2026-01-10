@@ -16,6 +16,7 @@ import {
   X,
   TrendingUp,
   Settings,
+  BarChart3,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
@@ -47,6 +48,7 @@ const navGroups = [
   {
     label: '系统',
     items: [
+      { href: '/statistics', label: '数据统计', icon: BarChart3 },
       { href: '/logs', label: '操作日志', icon: FileText },
     ],
   },

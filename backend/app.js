@@ -23,6 +23,7 @@ const orderRoutes = require('./routes/orders');
 const cashRoutes = require('./routes/cash');
 const dashboardRoutes = require('./routes/dashboard');
 const logRoutes = require('./routes/logs');
+const statisticsRoutes = require('./routes/statistics');
 
 const app = express();
 
@@ -43,6 +44,7 @@ app.use('/orders', orderRoutes);
 app.use('/cash', cashRoutes);
 app.use('/dashboard', dashboardRoutes);
 app.use('/logs', logRoutes);
+app.use('/statistics', statisticsRoutes);
 
 // Error handling
 app.use(notFoundHandler);

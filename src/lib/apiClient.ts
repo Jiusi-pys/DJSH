@@ -347,6 +347,57 @@ export const dashboardApi = {
   getStats: () => request<DashboardStats>('/dashboard/stats'),
 };
 
+// Statistics APIs
+export const statisticsApi = {
+  getCustomerOutstanding: () => request<{
+    items: Array<{
+      key: { contact_id: number };
+      display: {
+        contact_name: string;
+        contact_type: string;
+        phone: string;
+        total_sales: number;
+        total_received: number;
+        outstanding: number;
+      };
+    }>;
+  }>('/statistics/customer-outstanding'),
+
+  getProductSales: () => request<{
+    items: Array<{
+      key: { product_id: number };
+      display: {
+        product_name: string;
+        spec: string;
+        unit: string;
+        current_price: number;
+        category: string;
+        total_sold: number;
+        total_revenue: number;
+        avg_price: number;
+      };
+    }>;
+  }>('/statistics/product-sales'),
+
+  getInventory: () => request<{
+    items: Array<{
+      key: { product_id: number };
+      display: {
+        product_name: string;
+        spec: string;
+        unit: string;
+        unit_price: number;
+        category: string;
+        purchased: number;
+        sold: number;
+        stock: number;
+        purchase_cost: number;
+        sales_revenue: number;
+      };
+    }>;
+  }>('/statistics/inventory'),
+};
+
 // Create APIs
 export const contactsApi = {
   create: (data: { name: string; phone?: string; contact_person?: string; wechat?: string; qq?: string; contact_type?: 'customer' | 'supplier' | 'both' }) =>
