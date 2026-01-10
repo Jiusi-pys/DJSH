@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { Bell, Search, ChevronRight, LogOut, User, Shield, AlertCircle, CheckCircle, Clock, Inbox } from 'lucide-react';
+import { ThemeSelector } from '@/components/theme/ThemeSelector';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import {
@@ -166,6 +167,9 @@ export function TopBar({ title }: TopBarProps) {
               className="pl-9 w-[200px] h-9 bg-background/50"
             />
           </div>
+
+          {/* Theme Selector */}
+          <ThemeSelector />
 
           {/* Notifications */}
           <DropdownMenu>

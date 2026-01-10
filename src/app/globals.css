@@ -56,7 +56,35 @@
     --sidebar-accent: 239 84% 67%;
   }
 
-  .dark {
+  /* 蓝色主题 */
+  .theme-blue {
+    --primary: 217 91% 60%;
+    --primary-foreground: 0 0% 100%;
+    --accent: 199 89% 48%;
+    --sidebar-background: 217 91% 12%;
+    --sidebar-accent: 199 89% 48%;
+  }
+
+  /* 绿色主题 */
+  .theme-green {
+    --primary: 142 76% 36%;
+    --primary-foreground: 0 0% 100%;
+    --accent: 162 73% 46%;
+    --sidebar-background: 142 76% 8%;
+    --sidebar-accent: 162 73% 46%;
+  }
+
+  /* 紫色主题 */
+  .theme-purple {
+    --primary: 271 81% 56%;
+    --primary-foreground: 0 0% 100%;
+    --accent: 280 80% 65%;
+    --sidebar-background: 271 81% 12%;
+    --sidebar-accent: 280 80% 65%;
+  }
+
+  /* 深色主题 */
+  .theme-dark {
     --background: 224 71% 4%;
     --foreground: 220 14% 96%;
 
