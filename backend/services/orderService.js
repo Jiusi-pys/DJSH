@@ -7,6 +7,7 @@ const orderRepository = require('../repositories/orderRepository');
 const orderImageRepository = require('../repositories/orderImageRepository');
 const contactRepository = require('../repositories/contactRepository');
 const productRepository = require('../repositories/productRepository');
+const cashRepository = require('../repositories/cashRepository');
 const { logOperation, logError } = require('../middleware/logger');
 const { NotFoundError, VersionMismatchError, DisabledResourceError, ValidationError } = require('../utils/errors/AppError');
 
@@ -192,16 +193,48 @@ class OrderService {
   /**
    * Verify an order
    */
-  async verifyOrder(orderId, version, req) {
+  async verifyOrder(orderId, version, settledImmediately, req) {
     try {
       const oldData = await orderRepository.findById(orderId);
       if (!oldData) {
         throw new NotFoundError('Order');
       }
 
-      const success = await orderRepository.verify(orderId, version);
+      const success = await orderRepository.verify(orderId, version, settledImmediately);
       if (!success) {
         throw new VersionMismatchError();
+      }
+
+      // If settled immediately, create a cash transaction
+      if (settledImmediately) {
+        const transType = oldData.order_type === 'sales' ? 'income' : 'expense';
+        const category = oldData.order_type === 'sales' ? '销售收入' : '采购支出';
+
+        await cashRepository.create({
+          trans_type: transType,
+          amount: oldData.total_amount,
+          category: category,
+          trans_date: oldData.order_date,
+          contact_id: oldData.contact_id,
+          order_id: orderId,
+          remark: `订单 ${oldData.order_no} 当场结算`,
+          verified: 0, // Auto-created transactions are unverified by default
+        });
+
+        await logOperation({
+          module: 'cash',
+          action: 'auto_create',
+          targetType: 'transaction',
+          targetId: parseInt(orderId),
+          targetName: `订单 ${oldData.order_no}`,
+          newData: {
+            trans_type: transType,
+            amount: oldData.total_amount,
+            order_id: orderId,
+            verified: 0,
+          },
+          req
+        });
       }
 
       const newData = await orderRepository.findById(orderId);

@@ -38,6 +38,7 @@ export function OrderEditor({ type, orderId }: OrderEditorProps) {
     items: (OrderItemDisplay | NewItemPlaceholder)[];
   } | null>(null);
   const [hasChanges, setHasChanges] = useState(false);
+  const [settledImmediately, setSettledImmediately] = useState(false);
 
   // Image state: pending uploads and marked deletions
   const [pendingImages, setPendingImages] = useState<PendingImage[]>([]);
@@ -113,9 +114,12 @@ export function OrderEditor({ type, orderId }: OrderEditorProps) {
 
   // Verify mutation
   const verifyMutation = useMutation({
-    mutationFn: (version: number) => verifyOrder(type, orderId, version),
+    mutationFn: ({ version, settledImmediately }: { version: number; settledImmediately: boolean }) =>
+      verifyOrder(type, orderId, version, settledImmediately),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.orders.all(type) });
+      queryClient.invalidateQueries({ queryKey: ['cash', 'transactions'] });
+      queryClient.invalidateQueries({ queryKey: ['cash', 'balance'] });
       router.push('/verify');
     },
   });
@@ -166,9 +170,9 @@ export function OrderEditor({ type, orderId }: OrderEditorProps) {
     }
   }, [order, formData, updateMutation, pendingImages, deletedImageIds, type, orderId]);
 
-  const handleVerify = useCallback(() => {
+  const handleVerify = useCallback((settledImm: boolean) => {
     if (!order) return;
-    verifyMutation.mutate(order.key.version);
+    verifyMutation.mutate({ version: order.key.version, settledImmediately: settledImm });
   }, [order, verifyMutation]);
 
   const handleBack = useCallback(() => {
@@ -320,6 +324,8 @@ export function OrderEditor({ type, orderId }: OrderEditorProps) {
         isSaving={updateMutation.isPending}
         isVerifying={verifyMutation.isPending}
         isDirty={hasChanges}
+        settledImmediately={settledImmediately}
+        onSettledImmediatelyChange={setSettledImmediately}
       />
     </div>
   );

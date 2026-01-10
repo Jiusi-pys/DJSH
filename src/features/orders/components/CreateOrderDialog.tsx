@@ -35,7 +35,9 @@ interface OrderItemForm {
 export function CreateOrderDialog({ open, onOpenChange, type }: CreateOrderDialogProps) {
   const router = useRouter();
   const queryClient = useQueryClient();
-  const { contacts, products } = useLookups();
+  // For sales orders, only show customers; for purchase orders, only show suppliers
+  const contactType = type === 'sales' ? 'customer' : 'supplier';
+  const { contacts, products } = useLookups(contactType);
 
   const [orderNo, setOrderNo] = useState('');
   const [orderDate, setOrderDate] = useState<Date>(new Date());

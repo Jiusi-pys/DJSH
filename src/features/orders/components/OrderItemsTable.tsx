@@ -41,7 +41,8 @@ function NumberInput({ value, onChange, disabled, className, step = "0.01", min 
 
     // 只有当输入的是有效数字时才触发onChange
     const numValue = parseFloat(newValue);
-    if (!isNaN(numValue)) {
+    // Validate: must be a valid number, non-negative, finite, and within reasonable range
+    if (!isNaN(numValue) && numValue >= 0 && isFinite(numValue) && numValue < 100000000) {
       onChange(numValue);
     }
   };
@@ -54,7 +55,8 @@ function NumberInput({ value, onChange, disabled, className, step = "0.01", min 
     isEditingRef.current = false;
     // 当失去焦点时，确保显示正确的数字格式
     const numValue = parseFloat(inputValue);
-    if (isNaN(numValue)) {
+    if (isNaN(numValue) || numValue < 0 || !isFinite(numValue) || numValue >= 100000000) {
+      // Invalid input, revert to previous valid value
       setInputValue(String(value));
     } else {
       setInputValue(String(numValue));

@@ -91,8 +91,8 @@ class OrderController {
    */
   verify = asyncHandler(async (req, res) => {
     const { order_id } = req.params;
-    const { version } = req.body;
-    await orderService.verifyOrder(order_id, version, req);
+    const { version, settled_immediately } = req.body;
+    await orderService.verifyOrder(order_id, version, settled_immediately, req);
     res.json({ success: true });
   });
 

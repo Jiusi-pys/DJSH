@@ -117,6 +117,7 @@ function mapContactLookup(contact) {
       phone: contact.phone,
       wechat: contact.wechat,
       qq: contact.qq,
+      contact_type: contact.contact_type || 'customer',
       is_disabled: contact.is_disabled === 1,
     }
   };
@@ -167,6 +168,12 @@ function mapCashTransaction(tx) {
       category: tx.category || '',
       contact_name: tx.contact_name || '',
       remark: tx.remark || '',
+      cancelled: tx.cancelled === 1,
+      cancelled_reason: tx.cancelled_reason || '',
+      cancelled_at: tx.cancelled_at ? formatDate(tx.cancelled_at) : null,
+      verified: tx.verified === 1,
+      verified_at: tx.verified_at ? formatDate(tx.verified_at) : null,
+      version: tx.version || 1,
     }
   };
 }

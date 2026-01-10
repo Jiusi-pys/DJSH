@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useCallback, useEffect, type ReactNode } from 'react';
+import { useState, useCallback, useEffect, useRef, type ReactNode } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { AuthContext } from './AuthContext';
 import type { User, LoginResult, AuthState } from '@/types/auth';
+import { userSchema, loginResponseSchema, authCheckResponseSchema } from '@/types/auth.schemas';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080';
 
@@ -25,7 +26,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [state, setState] = useState<AuthState>({
     user: null,
     isAuthenticated: false,
-    isLoading: true,
+    isLoading: false, // 初始设为 false，避免 SSR 时卡住
     error: null,
   });
 
@@ -34,24 +35,37 @@ export function AuthProvider({ children }: AuthProviderProps) {
    */
   const checkAuth = useCallback(async () => {
     try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10秒超时
+
       const response = await fetch(`${API_BASE}/auth/me`, {
         method: 'GET',
         credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
         },
+        signal: controller.signal,
       });
 
+      clearTimeout(timeoutId);
+
       if (response.ok) {
-        const result = await response.json();
-        if (result.success && result.data) {
+        const rawResult = await response.json();
+        // Validate response with Zod schema
+        const parseResult = authCheckResponseSchema.safeParse(rawResult);
+
+        if (parseResult.success && parseResult.data.success && parseResult.data.data) {
           setState({
-            user: result.data as User,
+            user: parseResult.data.data,
             isAuthenticated: true,
             isLoading: false,
             error: null,
           });
           return;
+        }
+
+        if (!parseResult.success) {
+          console.error('Invalid auth response format:', parseResult.error);
         }
       }
 
@@ -66,7 +80,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
         });
       }
     } catch (error) {
-      console.error('Auth check failed:', error);
+      if (process.env.NODE_ENV === 'development') {
+        const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+        console.error('Auth check failed:', errorMsg);
+      }
+      // 确保在任何错误情况下都设置 isLoading 为 false
       setState({
         user: null,
         isAuthenticated: false,
@@ -81,42 +99,64 @@ export function AuthProvider({ children }: AuthProviderProps) {
    */
   const refreshTokenInternal = async (): Promise<boolean> => {
     try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10秒超时
+
       const response = await fetch(`${API_BASE}/auth/refresh`, {
         method: 'POST',
         credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
         },
+        signal: controller.signal,
       });
+
+      clearTimeout(timeoutId);
 
       if (response.ok) {
         const result = await response.json();
         if (result.success) {
           // 重新获取用户信息
+          const meController = new AbortController();
+          const meTimeoutId = setTimeout(() => meController.abort(), 10000);
+
           const meResponse = await fetch(`${API_BASE}/auth/me`, {
             method: 'GET',
             credentials: 'include',
             headers: {
               'Content-Type': 'application/json',
             },
+            signal: meController.signal,
           });
 
+          clearTimeout(meTimeoutId);
+
           if (meResponse.ok) {
-            const meResult = await meResponse.json();
-            if (meResult.success && meResult.data) {
+            const rawMeResult = await meResponse.json();
+            // Validate with Zod schema
+            const parseResult = authCheckResponseSchema.safeParse(rawMeResult);
+
+            if (parseResult.success && parseResult.data.success && parseResult.data.data) {
               setState({
-                user: meResult.data as User,
+                user: parseResult.data.data,
                 isAuthenticated: true,
                 isLoading: false,
                 error: null,
               });
               return true;
             }
+
+            if (!parseResult.success && process.env.NODE_ENV === 'development') {
+              console.error('Invalid user data after refresh:', parseResult.error);
+            }
           }
         }
       }
       return false;
-    } catch {
+    } catch (error) {
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Token refresh failed:', error);
+      }
       return false;
     }
   };
@@ -128,6 +168,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setState(prev => ({ ...prev, isLoading: true, error: null }));
 
     try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000); // 15秒超时
+
       const response = await fetch(`${API_BASE}/auth/login`, {
         method: 'POST',
         credentials: 'include',
@@ -135,13 +178,31 @@ export function AuthProvider({ children }: AuthProviderProps) {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ username, password }),
+        signal: controller.signal,
       });
 
-      const result = await response.json();
+      clearTimeout(timeoutId);
+
+      const rawResult = await response.json();
+      // Validate login response with Zod schema
+      const parseResult = loginResponseSchema.safeParse(rawResult);
+
+      if (!parseResult.success) {
+        if (process.env.NODE_ENV === 'development') {
+          console.error('Invalid login response format:', parseResult.error);
+        }
+        setState(prev => ({ ...prev, isLoading: false }));
+        return {
+          success: false,
+          message: '登录响应格式错误',
+        };
+      }
+
+      const result = parseResult.data;
 
       if (result.success && result.data) {
         setState({
-          user: result.data.user as User,
+          user: result.data.user,
           isAuthenticated: true,
           isLoading: false,
           error: null,
@@ -169,7 +230,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
         lockDuration: result.lockDuration,
       };
     } catch (error) {
-      const message = error instanceof Error ? error.message : '网络错误，请检查网络连接';
+      let message = '网络错误，请检查网络连接';
+      if (error instanceof Error) {
+        if (error.name === 'AbortError') {
+          message = '请求超时，请检查网络连接';
+        } else {
+          message = error.message;
+        }
+      }
+
       setState(prev => ({
         ...prev,
         isLoading: false,
@@ -188,16 +257,25 @@ export function AuthProvider({ children }: AuthProviderProps) {
    */
   const logout = useCallback(async () => {
     try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5秒超时
+
       await fetch(`${API_BASE}/auth/logout`, {
         method: 'POST',
         credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
         },
+        signal: controller.signal,
       });
+
+      clearTimeout(timeoutId);
     } catch (error) {
-      console.error('Logout error:', error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Logout error:', error);
+      }
     } finally {
+      // 无论如何都清除本地状态
       setState({
         user: null,
         isAuthenticated: false,
@@ -222,10 +300,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setState(prev => ({ ...prev, error: null }));
   }, []);
 
-  // 初始化时检查认证状态
+  // 初始化时检查认证状态（仅执行一次）
+  const hasCheckedAuth = useRef(false);
   useEffect(() => {
-    checkAuth();
-  }, [checkAuth]);
+    if (!hasCheckedAuth.current) {
+      hasCheckedAuth.current = true;
+      // 设置加载状态并检查认证
+      setState(prev => ({ ...prev, isLoading: true }));
+      checkAuth();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // 只在组件挂载时执行一次
 
   // 路由保护
   useEffect(() => {
@@ -240,7 +325,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
       // 已认证但在登录页，跳转到首页
       router.push('/dashboard');
     }
-  }, [state.isAuthenticated, state.isLoading, pathname, router]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.isAuthenticated, state.isLoading, pathname]); // 移除 router 避免重定向循环
 
   return (
     <AuthContext.Provider

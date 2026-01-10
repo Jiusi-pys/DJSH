@@ -12,12 +12,24 @@ class ContactRepository extends BaseRepository {
 
   /**
    * Find all contacts for lookup
+   * @param {string} contactType - Filter by contact type: 'customer', 'supplier', 'both', or null for all
    */
-  async findAllForLookup(connection = null) {
+  async findAllForLookup(contactType = null, connection = null) {
     const db = this.getDb(connection);
-    const [rows] = await db.query(
-      'SELECT id as contact_id, name, contact_person, phone, wechat, qq, is_disabled FROM contacts WHERE deleted_at IS NULL'
-    );
+    let query = 'SELECT id as contact_id, name, contact_person, phone, wechat, qq, contact_type, is_disabled FROM contacts WHERE deleted_at IS NULL';
+    const params = [];
+
+    // Filter by contact type
+    // For 'customer' type lookups: show contacts where contact_type = 'customer' OR 'both'
+    // For 'supplier' type lookups: show contacts where contact_type = 'supplier' OR 'both'
+    if (contactType === 'customer') {
+      query += " AND (contact_type = 'customer' OR contact_type = 'both')";
+    } else if (contactType === 'supplier') {
+      query += " AND (contact_type = 'supplier' OR contact_type = 'both')";
+    }
+    // If contactType is null or 'both', show all contacts
+
+    const [rows] = await db.query(query, params);
     return rows;
   }
 
@@ -55,11 +67,11 @@ class ContactRepository extends BaseRepository {
    */
   async update(id, data, connection = null) {
     const db = this.getDb(connection);
-    const { name, contact_person, phone, wechat, qq } = data;
+    const { name, contact_person, phone, wechat, qq, contact_type } = data;
 
     const [result] = await db.query(
-      `UPDATE contacts SET name = ?, contact_person = ?, phone = ?, wechat = ?, qq = ? WHERE id = ?`,
-      [name, contact_person || null, phone || null, wechat || null, qq || null, id]
+      `UPDATE contacts SET name = ?, contact_person = ?, phone = ?, wechat = ?, qq = ?, contact_type = ? WHERE id = ?`,
+      [name, contact_person || null, phone || null, wechat || null, qq || null, contact_type || 'customer', id]
     );
 
     return result.affectedRows > 0;

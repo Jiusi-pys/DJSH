@@ -4,17 +4,21 @@
 
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { ArrowLeft, Save, CheckCircle } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
+import { ArrowLeft, Save, CheckCircle, DollarSign } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 interface VerifyActionBarProps {
   onBack: () => void;
   onSave: () => void;
-  onVerify: () => void;
+  onVerify: (settledImmediately: boolean) => void;
   isSaving: boolean;
   isVerifying: boolean;
   isDirty: boolean;
   hasChanges?: boolean;
+  settledImmediately: boolean;
+  onSettledImmediatelyChange: (checked: boolean) => void;
 }
 
 export function VerifyActionBar({
@@ -24,6 +28,8 @@ export function VerifyActionBar({
   isSaving,
   isVerifying,
   isDirty,
+  settledImmediately,
+  onSettledImmediatelyChange,
 }: VerifyActionBarProps) {
   const router = useRouter();
 
@@ -36,7 +42,23 @@ export function VerifyActionBar({
             返回
           </Button>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-4">
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="settled-immediately"
+                checked={settledImmediately}
+                onCheckedChange={onSettledImmediatelyChange}
+                disabled={isSaving || isVerifying}
+              />
+              <Label
+                htmlFor="settled-immediately"
+                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex items-center gap-1"
+              >
+                <DollarSign className="w-4 h-4" />
+                当场结算
+              </Label>
+            </div>
+
             <Button
               variant="outline"
               onClick={onSave}
@@ -47,7 +69,7 @@ export function VerifyActionBar({
             </Button>
 
             <Button
-              onClick={onVerify}
+              onClick={() => onVerify(settledImmediately)}
               disabled={isSaving || isVerifying}
             >
               <CheckCircle className="w-4 h-4 mr-2" />

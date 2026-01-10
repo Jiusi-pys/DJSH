@@ -17,9 +17,10 @@ export async function updateOrder(
 export async function verifyOrder(
   type: 'sales' | 'purchase',
   orderId: number,
-  version: number
+  version: number,
+  settledImmediately?: boolean
 ) {
-  return orderApi.verifyOrder(type, orderId, version);
+  return orderApi.verifyOrder(type, orderId, version, settledImmediately);
 }
 
 // Transform order detail to form data

@@ -7,6 +7,22 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { ZoomIn, ZoomOut, RotateCw, Image as ImageIcon, ChevronLeft, ChevronRight, Upload, Trash2 } from 'lucide-react';
 
+// Allowed MIME types for security
+const ALLOWED_IMAGE_MIME_TYPES = [
+  'image/jpeg',
+  'image/jpg',
+  'image/png',
+  'image/gif',
+  'image/webp',
+] as const;
+
+// Max file size: 10MB
+const MAX_FILE_SIZE = 10 * 1024 * 1024;
+
+function isValidImageMimeType(mimeType: string): boolean {
+  return ALLOWED_IMAGE_MIME_TYPES.includes(mimeType as any);
+}
+
 // Server image (already saved)
 interface ServerImage {
   key: { image_id: number };
@@ -65,13 +81,32 @@ export function OrderImagePanel({
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    // Validate file type
+    if (!isValidImageMimeType(file.type)) {
+      alert('不支持的图片格式。请上传 JPEG、PNG、GIF 或 WebP 格式的图片。');
+      e.target.value = '';
+      return;
+    }
+
+    // Validate file size
+    if (file.size > MAX_FILE_SIZE) {
+      alert(`文件大小超过限制。最大允许 ${MAX_FILE_SIZE / 1024 / 1024}MB。`);
+      e.target.value = '';
+      return;
+    }
+
     setUploading(true);
     try {
       const reader = new FileReader();
       reader.onload = () => {
         const dataUrl = reader.result as string;
         const base64Data = dataUrl.split(',')[1];
-        const tempId = `pending_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+        // Generate unique temporary ID with counter to prevent collisions
+        let tempIdCounter = 0;
+        const tempId = `pending_${Date.now()}_${++tempIdCounter}_${Math.random().toString(36).substr(2, 9)}`;
+
         onAddImage({
           tempId,
           base64: base64Data,
@@ -85,6 +120,7 @@ export function OrderImagePanel({
       };
       reader.readAsDataURL(file);
     } catch {
+      alert('图片处理失败，请重试');
       setUploading(false);
     }
     e.target.value = '';
@@ -134,10 +170,20 @@ export function OrderImagePanel({
     if (displayImage.type === 'server') {
       const img = displayImage.image;
       if (img.display.base64) {
+        // Validate MIME type to prevent XSS attacks
+        if (!isValidImageMimeType(img.display.mime_type)) {
+          console.error('Invalid MIME type from server:', img.display.mime_type);
+          return ''; // Don't render invalid image types
+        }
         return `data:${img.display.mime_type};base64,${img.display.base64}`;
       }
     } else {
       const img = displayImage.image;
+      // Pending images are already validated during upload
+      if (!isValidImageMimeType(img.mimeType)) {
+        console.error('Invalid MIME type in pending image:', img.mimeType);
+        return '';
+      }
       return `data:${img.mimeType};base64,${img.base64}`;
     }
     return '';

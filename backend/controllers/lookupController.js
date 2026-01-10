@@ -24,10 +24,11 @@ class LookupController {
   });
 
   /**
-   * GET /lookups/contacts
+   * GET /lookups/contacts?type=customer|supplier
    */
   getContacts = asyncHandler(async (req, res) => {
-    const contacts = await lookupService.getContacts();
+    const contactType = req.query.type; // 'customer', 'supplier', or undefined for all
+    const contacts = await lookupService.getContacts(contactType);
     res.json(mapLookupResponse(contacts, mapContactLookup));
   });
 }

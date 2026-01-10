@@ -129,12 +129,12 @@ class OrderRepository extends BaseRepository {
   /**
    * Verify an order
    */
-  async verify(id, version, connection = null) {
+  async verify(id, version, settledImmediately = false, connection = null) {
     const db = this.getDb(connection);
     const [result] = await db.query(
-      `UPDATE orders SET manual_verified = 1, version = version + 1
+      `UPDATE orders SET manual_verified = 1, settled_immediately = ?, version = version + 1
        WHERE id = ? AND version = ? AND deleted_at IS NULL`,
-      [id, version]
+      [settledImmediately ? 1 : 0, id, version]
     );
     return result.affectedRows > 0;
   }

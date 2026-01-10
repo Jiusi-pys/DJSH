@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Search, Phone, User, MessageCircle, Edit2, Ban, RotateCcw } from 'lucide-react';
+import { Plus, Search, Phone, User, MessageCircle, Edit2, Ban, RotateCcw, TrendingUp, TrendingDown, ArrowLeftRight } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useLookups } from '@/features/lookups/useLookups';
 import { contactsApi } from '@/lib/apiClient';
@@ -25,19 +25,46 @@ function validatePhone(phone: string): boolean {
   return mobileRegex.test(phone) || landlineRegex.test(phone);
 }
 
+// 客户类型显示标签
+function ContactTypeBadge({ type }: { type: 'customer' | 'supplier' | 'both' }) {
+  if (type === 'customer') {
+    return (
+      <Badge variant="default" className="flex items-center gap-1">
+        <TrendingUp className="h-3 w-3" />
+        下游客户
+      </Badge>
+    );
+  }
+  if (type === 'supplier') {
+    return (
+      <Badge variant="secondary" className="flex items-center gap-1">
+        <TrendingDown className="h-3 w-3" />
+        上游供应商
+      </Badge>
+    );
+  }
+  return (
+    <Badge variant="outline" className="flex items-center gap-1 border-purple-300 text-purple-600">
+      <ArrowLeftRight className="h-3 w-3" />
+      全是
+    </Badge>
+  );
+}
+
 export default function ContactsPage() {
   const { contacts, isLoading } = useLookups();
   const [search, setSearch] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [phoneError, setPhoneError] = useState('');
-  const [editingContact, setEditingContact] = useState<{ id: number; name: string; contact_person: string; phone: string; wechat: string; qq: string } | null>(null);
+  const [editingContact, setEditingContact] = useState<{ id: number; name: string; contact_person: string; phone: string; wechat: string; qq: string; contact_type: 'customer' | 'supplier' | 'both' } | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     contact_person: '',
     phone: '',
     wechat: '',
-    qq: ''
+    qq: '',
+    contact_type: 'customer' as 'customer' | 'supplier' | 'both'
   });
 
   const queryClient = useQueryClient();
@@ -99,6 +126,7 @@ export default function ContactsPage() {
       phone: formData.phone || undefined,
       wechat: formData.wechat || undefined,
       qq: formData.qq || undefined,
+      contact_type: formData.contact_type,
     });
   };
 
@@ -117,7 +145,8 @@ export default function ContactsPage() {
         contact_person: editingContact.contact_person || undefined,
         phone: editingContact.phone || undefined,
         wechat: editingContact.wechat || undefined,
-        qq: editingContact.qq || undefined
+        qq: editingContact.qq || undefined,
+        contact_type: editingContact.contact_type
       }
     });
   };
@@ -130,7 +159,8 @@ export default function ContactsPage() {
       contact_person: contact.display.contact_person || '',
       phone: contact.display.phone || '',
       wechat: contact.display.wechat || '',
-      qq: contact.display.qq || ''
+      qq: contact.display.qq || '',
+      contact_type: (contact.display as any).contact_type || 'customer'
     });
     setEditDialogOpen(true);
   };
@@ -192,6 +222,9 @@ export default function ContactsPage() {
                             <Badge variant="outline" className="text-green-600 border-green-300 text-xs flex-shrink-0">正常</Badge>
                           )}
                         </div>
+                        <div className="mb-1">
+                          <ContactTypeBadge type={(contact.display as any).contact_type || 'customer'} />
+                        </div>
                         {contact.display.contact_person && (
                           <div className="flex items-center gap-1 text-xs text-muted-foreground mb-1">
                             <User className="h-3 w-3" />
@@ -237,6 +270,7 @@ export default function ContactsPage() {
                   <TableHeader>
                     <TableRow>
                       <TableHead>客户名称</TableHead>
+                      <TableHead>客户类型</TableHead>
                       <TableHead>联系人</TableHead>
                       <TableHead>联系方式</TableHead>
                       <TableHead>状态</TableHead>
@@ -247,6 +281,9 @@ export default function ContactsPage() {
                     {filteredContacts.map((contact) => (
                       <TableRow key={contact.key.contact_id} className={contact.display.is_disabled ? 'opacity-60' : ''}>
                         <TableCell className="font-medium">{contact.display.name}</TableCell>
+                        <TableCell>
+                          <ContactTypeBadge type={(contact.display as any).contact_type || 'customer'} />
+                        </TableCell>
                         <TableCell>
                           {contact.display.contact_person ? (
                             <div className="flex items-center gap-1">
@@ -352,7 +389,7 @@ export default function ContactsPage() {
       <Dialog open={dialogOpen} onOpenChange={(open) => {
         setDialogOpen(open);
         if (!open) {
-          setFormData({ name: '', contact_person: '', phone: '', wechat: '', qq: '' });
+          setFormData({ name: '', contact_person: '', phone: '', wechat: '', qq: '', contact_type: 'customer' });
           setPhoneError('');
         }
       }}>
@@ -369,6 +406,38 @@ export default function ContactsPage() {
                 placeholder="输入客户名称"
                 className="h-10"
               />
+            </div>
+            <div>
+              <Label>客户类型 *</Label>
+              <div className="flex gap-2 mt-1">
+                <Button
+                  type="button"
+                  variant={formData.contact_type === 'customer' ? 'default' : 'outline'}
+                  onClick={() => setFormData({ ...formData, contact_type: 'customer' })}
+                  className="flex-1"
+                >
+                  <TrendingUp className="h-4 w-4 mr-1" />
+                  下游客户
+                </Button>
+                <Button
+                  type="button"
+                  variant={formData.contact_type === 'supplier' ? 'secondary' : 'outline'}
+                  onClick={() => setFormData({ ...formData, contact_type: 'supplier' })}
+                  className="flex-1"
+                >
+                  <TrendingDown className="h-4 w-4 mr-1" />
+                  上游供应商
+                </Button>
+                <Button
+                  type="button"
+                  variant={formData.contact_type === 'both' ? 'outline' : 'outline'}
+                  onClick={() => setFormData({ ...formData, contact_type: 'both' })}
+                  className={`flex-1 ${formData.contact_type === 'both' ? 'border-purple-300 text-purple-600 bg-purple-50' : ''}`}
+                >
+                  <ArrowLeftRight className="h-4 w-4 mr-1" />
+                  全是
+                </Button>
+              </div>
             </div>
             <div>
               <Label>联系人</Label>
@@ -444,6 +513,38 @@ export default function ContactsPage() {
                   placeholder="输入客户名称"
                   className="h-10"
                 />
+              </div>
+              <div>
+                <Label>客户类型 *</Label>
+                <div className="flex gap-2 mt-1">
+                  <Button
+                    type="button"
+                    variant={editingContact.contact_type === 'customer' ? 'default' : 'outline'}
+                    onClick={() => setEditingContact({ ...editingContact, contact_type: 'customer' })}
+                    className="flex-1"
+                  >
+                    <TrendingUp className="h-4 w-4 mr-1" />
+                    下游客户
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={editingContact.contact_type === 'supplier' ? 'secondary' : 'outline'}
+                    onClick={() => setEditingContact({ ...editingContact, contact_type: 'supplier' })}
+                    className="flex-1"
+                  >
+                    <TrendingDown className="h-4 w-4 mr-1" />
+                    上游供应商
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={editingContact.contact_type === 'both' ? 'outline' : 'outline'}
+                    onClick={() => setEditingContact({ ...editingContact, contact_type: 'both' })}
+                    className={`flex-1 ${editingContact.contact_type === 'both' ? 'border-purple-300 text-purple-600 bg-purple-50' : ''}`}
+                  >
+                    <ArrowLeftRight className="h-4 w-4 mr-1" />
+                    全是
+                  </Button>
+                </div>
               </div>
               <div>
                 <Label>联系人</Label>

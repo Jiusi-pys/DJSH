@@ -35,6 +35,7 @@ function StatCard({
   trend,
   trendValue,
   variant = 'default',
+  onClick,
 }: {
   title: string;
   value: string | number;
@@ -43,6 +44,7 @@ function StatCard({
   trend?: 'up' | 'down' | null;
   trendValue?: string;
   variant?: 'default' | 'primary' | 'success' | 'warning' | 'danger';
+  onClick?: () => void;
 }) {
   const variantStyles = {
     default: 'bg-card',
@@ -61,7 +63,10 @@ function StatCard({
   };
 
   return (
-    <Card className={`stat-card ${variantStyles[variant]} border-0 shadow-lg`}>
+    <Card
+      className={`stat-card ${variantStyles[variant]} border-0 shadow-lg ${onClick ? 'cursor-pointer transition-transform hover:scale-105 hover:shadow-xl' : ''}`}
+      onClick={onClick}
+    >
       <CardContent className="p-3 sm:p-4 lg:p-6">
         <div className="flex items-start justify-between">
           <div className="space-y-1 sm:space-y-2 min-w-0 flex-1">
@@ -104,11 +109,13 @@ function MiniStatCard({
   value,
   icon: Icon,
   color,
+  onClick,
 }: {
   title: string;
   value: number;
   icon: React.ElementType;
   color: 'orange' | 'green' | 'gray' | 'blue' | 'purple';
+  onClick?: () => void;
 }) {
   const colorStyles = {
     orange: 'bg-orange-50 text-orange-600 border-orange-100',
@@ -119,7 +126,10 @@ function MiniStatCard({
   };
 
   return (
-    <div className={`flex items-center gap-2 sm:gap-4 p-2 sm:p-4 rounded-lg sm:rounded-xl border ${colorStyles[color]}`}>
+    <div
+      className={`flex items-center gap-2 sm:gap-4 p-2 sm:p-4 rounded-lg sm:rounded-xl border ${colorStyles[color]} ${onClick ? 'cursor-pointer transition-all hover:scale-105 hover:shadow-md' : ''}`}
+      onClick={onClick}
+    >
       <Icon className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
       <div className="min-w-0">
         <p className="text-lg sm:text-2xl font-bold">{value}</p>
@@ -168,6 +178,7 @@ export default function DashboardPage() {
           trend={dayGrowth ? (parseFloat(dayGrowth) >= 0 ? 'up' : 'down') : null}
           trendValue={dayGrowth ? `${Math.abs(parseFloat(dayGrowth))}% 较昨日` : undefined}
           subValue={!dayGrowth ? `${stats?.todaySales?.count || 0} 笔订单` : undefined}
+          onClick={() => router.push('/orders/sales')}
         />
         <StatCard
           title="本月销售额"
@@ -176,12 +187,14 @@ export default function DashboardPage() {
           trend={monthGrowth ? (parseFloat(monthGrowth) >= 0 ? 'up' : 'down') : null}
           trendValue={monthGrowth ? `${Math.abs(parseFloat(monthGrowth))}% 较上月` : undefined}
           subValue={`${stats?.monthSales?.count || 0} 笔订单`}
+          onClick={() => router.push('/orders/sales')}
         />
         <StatCard
           title="本月采购额"
           value={formatCurrency(stats?.monthPurchase?.amount || 0)}
           icon={ShoppingBag}
           subValue={`${stats?.monthPurchase?.count || 0} 笔订单`}
+          onClick={() => router.push('/orders/purchase')}
         />
         <StatCard
           title="本月净现金流"
@@ -189,16 +202,47 @@ export default function DashboardPage() {
           icon={Wallet}
           variant={(stats?.cashFlow?.net || 0) >= 0 ? 'success' : 'danger'}
           subValue={`收 ${formatCurrency(stats?.cashFlow?.income || 0)}`}
+          onClick={() => router.push('/cash')}
         />
       </div>
 
       {/* Order Status */}
       <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 sm:gap-4">
-        <MiniStatCard title="待审核" value={stats?.orderStats?.pending || 0} icon={Clock} color="orange" />
-        <MiniStatCard title="已审核" value={stats?.orderStats?.verified || 0} icon={CheckCircle} color="green" />
-        <MiniStatCard title="已废弃" value={stats?.orderStats?.cancelled || 0} icon={XCircle} color="gray" />
-        <MiniStatCard title="客户数" value={stats?.totalCustomers || 0} icon={Users} color="blue" />
-        <MiniStatCard title="商品数" value={stats?.totalProducts || 0} icon={Package} color="purple" />
+        <MiniStatCard
+          title="待审核"
+          value={stats?.orderStats?.pending || 0}
+          icon={Clock}
+          color="orange"
+          onClick={() => router.push('/verify')}
+        />
+        <MiniStatCard
+          title="已审核"
+          value={stats?.orderStats?.verified || 0}
+          icon={CheckCircle}
+          color="green"
+          onClick={() => router.push('/verify')}
+        />
+        <MiniStatCard
+          title="已废弃"
+          value={stats?.orderStats?.cancelled || 0}
+          icon={XCircle}
+          color="gray"
+          onClick={() => router.push('/verify')}
+        />
+        <MiniStatCard
+          title="客户数"
+          value={stats?.totalCustomers || 0}
+          icon={Users}
+          color="blue"
+          onClick={() => router.push('/contacts')}
+        />
+        <MiniStatCard
+          title="商品数"
+          value={stats?.totalProducts || 0}
+          icon={Package}
+          color="purple"
+          onClick={() => router.push('/products')}
+        />
       </div>
 
       {/* Charts Row */}
@@ -263,7 +307,11 @@ export default function DashboardPage() {
             ) : (
               <div className="divide-y">
                 {topProducts.map((product, index) => (
-                  <div key={product.name} className="flex items-center justify-between px-3 sm:px-6 py-3 sm:py-4 hover:bg-muted/30 transition-colors">
+                  <div
+                    key={product.name}
+                    className="flex items-center justify-between px-3 sm:px-6 py-3 sm:py-4 hover:bg-muted/30 transition-colors cursor-pointer"
+                    onClick={() => router.push('/products')}
+                  >
                     <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
                       <span className={`w-6 h-6 sm:w-7 sm:h-7 rounded-md sm:rounded-lg flex items-center justify-center text-xs font-bold flex-shrink-0 ${
                         index === 0 ? 'bg-gradient-to-br from-yellow-400 to-yellow-500 text-white' :
@@ -297,7 +345,11 @@ export default function DashboardPage() {
             ) : (
               <div className="divide-y">
                 {topCustomers.map((customer, index) => (
-                  <div key={customer.name} className="flex items-center justify-between px-3 sm:px-6 py-3 sm:py-4 hover:bg-muted/30 transition-colors">
+                  <div
+                    key={customer.name}
+                    className="flex items-center justify-between px-3 sm:px-6 py-3 sm:py-4 hover:bg-muted/30 transition-colors cursor-pointer"
+                    onClick={() => router.push('/contacts')}
+                  >
                     <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
                       <span className={`w-6 h-6 sm:w-7 sm:h-7 rounded-md sm:rounded-lg flex items-center justify-center text-xs font-bold flex-shrink-0 ${
                         index === 0 ? 'bg-gradient-to-br from-yellow-400 to-yellow-500 text-white' :

@@ -1,16 +1,99 @@
 // Typed API client wrapper for the finance management API
 // This module provides type-safe API calls without exposing internal IDs
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080';
+// Validate API base URL
+function getApiBaseUrl(): string {
+  const url = process.env.NEXT_PUBLIC_API_BASE_URL;
+
+  if (!url) {
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error('NEXT_PUBLIC_API_BASE_URL must be set in production');
+    }
+    console.warn('NEXT_PUBLIC_API_BASE_URL not set, using default localhost:8080');
+    return 'http://localhost:8080';
+  }
+
+  // Validate URL format
+  try {
+    new URL(url);
+  } catch {
+    throw new Error(`Invalid NEXT_PUBLIC_API_BASE_URL: ${url}`);
+  }
+
+  return url;
+}
+
+const API_BASE_URL = getApiBaseUrl();
+
+// Request timeout in milliseconds
+const REQUEST_TIMEOUT = 30000;
 
 interface RequestOptions {
   method?: 'GET' | 'POST' | 'PUT' | 'DELETE';
   body?: unknown;
   params?: Record<string, string | number | boolean | undefined>;
+  timeout?: number;
+}
+
+// Safe error messages mapping
+const ERROR_MESSAGES: Record<number, string> = {
+  400: '请求参数错误',
+  401: '认证失败，请重新登录',
+  403: '没有权限执行此操作',
+  404: '请求的资源不存在',
+  409: '数据冲突，请刷新后重试',
+  422: '数据验证失败',
+  500: '服务器错误，请稍后重试',
+  502: '网关错误，请稍后重试',
+  503: '服务暂时不可用，请稍后重试',
+};
+
+function sanitizeErrorMessage(status: number, message?: string): string {
+  // Use safe predefined message for the status code
+  const safeMessage = ERROR_MESSAGES[status];
+
+  if (safeMessage) {
+    return safeMessage;
+  }
+
+  // For other errors, provide generic message
+  if (status >= 500) {
+    return '服务器错误，请稍后重试';
+  }
+
+  if (status >= 400) {
+    return '请求失败，请检查输入或稍后重试';
+  }
+
+  return message || `请求失败 (${status})`;
+}
+
+async function fetchWithTimeout(
+  url: string,
+  options: RequestInit,
+  timeout: number
+): Promise<Response> {
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), timeout);
+
+  try {
+    const response = await fetch(url, {
+      ...options,
+      signal: controller.signal,
+    });
+    clearTimeout(id);
+    return response;
+  } catch (error) {
+    clearTimeout(id);
+    if (error instanceof Error && error.name === 'AbortError') {
+      throw new Error('请求超时，请检查网络连接');
+    }
+    throw error;
+  }
 }
 
 async function request<T>(endpoint: string, options: RequestOptions = {}): Promise<T> {
-  const { method = 'GET', body, params } = options;
+  const { method = 'GET', body, params, timeout = REQUEST_TIMEOUT } = options;
 
   const url = new URL(`${API_BASE_URL}${endpoint}`);
   if (params) {
@@ -25,15 +108,37 @@ async function request<T>(endpoint: string, options: RequestOptions = {}): Promi
     'Content-Type': 'application/json',
   };
 
-  const response = await fetch(url.toString(), {
-    method,
-    headers,
-    body: body ? JSON.stringify(body) : undefined,
-  });
+  const response = await fetchWithTimeout(
+    url.toString(),
+    {
+      method,
+      headers,
+      credentials: 'include', // ✅ Include cookies for authentication
+      body: body ? JSON.stringify(body) : undefined,
+    },
+    timeout
+  );
+
+  // Validate Content-Type before parsing
+  const contentType = response.headers.get('content-type');
+  const isJson = contentType?.includes('application/json');
 
   if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.message || `API Error: ${response.status}`);
+    let errorMessage: string;
+
+    if (isJson) {
+      const errorData = await response.json().catch(() => ({}));
+      // Sanitize error message to prevent information leakage
+      errorMessage = sanitizeErrorMessage(response.status, errorData.message);
+    } else {
+      errorMessage = sanitizeErrorMessage(response.status);
+    }
+
+    throw new Error(errorMessage);
+  }
+
+  if (!isJson) {
+    throw new Error('服务器返回了无效的响应格式');
   }
 
   return response.json();
@@ -46,8 +151,10 @@ export const lookupApi = {
   getProducts: () =>
     request<{ version: string; items: LookupEntry[] }>('/lookups/products'),
 
-  getContacts: () =>
-    request<{ version: string; items: LookupEntry[] }>('/lookups/contacts'),
+  getContacts: (type?: 'customer' | 'supplier') =>
+    request<{ version: string; items: LookupEntry[] }>('/lookups/contacts', {
+      params: type ? { type } : undefined,
+    }),
 };
 
 // Order APIs
@@ -64,10 +171,10 @@ export const orderApi = {
       body: data,
     }),
 
-  verifyOrder: (type: 'sales' | 'purchase', orderId: number, version: number) =>
+  verifyOrder: (type: 'sales' | 'purchase', orderId: number, version: number, settledImmediately?: boolean) =>
     request<OrderDetail>(`/orders/${type}/${orderId}/verify`, {
       method: 'POST',
-      body: { version },
+      body: { version, settled_immediately: settledImmediately },
     }),
 };
 
@@ -198,10 +305,42 @@ export interface DashboardStats {
 
 // Cash and Dashboard APIs
 export const cashApi = {
+  getBalance: () => request<{ balance: number }>('/cash/balance'),
   getTransactions: (params?: { type?: string; date_from?: string; date_to?: string; page?: number; page_size?: number }) =>
     request<CashTransactionsResponse>('/cash/transactions', { params }),
   create: (data: { trans_type: 'income' | 'expense'; amount: number; category?: string; trans_date?: string; remark?: string }) =>
     request<CashTransaction>('/cash/transactions', { method: 'POST', body: data }),
+  uploadImage: (transactionId: number, data: { image_data: string; mime_type: string }) =>
+    request<ImageUploadResponse>(`/cash/transactions/${transactionId}/images`, {
+      method: 'POST',
+      body: data,
+    }),
+  getImages: (transactionId: number) =>
+    request<{ items: Array<{ key: { image_id: number }; display: { mime_type: string; base64: string } }> }>(`/cash/transactions/${transactionId}/images`),
+  deleteImage: (transactionId: number, imageId: number) =>
+    request<{ success: boolean }>(`/cash/transactions/${transactionId}/images/${imageId}`, {
+      method: 'DELETE',
+    }),
+  cancel: (transactionId: number, version: number, reason?: string) =>
+    request<{ success: boolean }>(`/cash/transactions/${transactionId}/cancel`, {
+      method: 'PUT',
+      body: { version, reason },
+    }),
+  restore: (transactionId: number, version: number) =>
+    request<{ success: boolean }>(`/cash/transactions/${transactionId}/restore`, {
+      method: 'PUT',
+      body: { version },
+    }),
+  verify: (transactionId: number, version: number) =>
+    request<{ success: boolean }>(`/cash/transactions/${transactionId}/verify`, {
+      method: 'PUT',
+      body: { version },
+    }),
+  unverify: (transactionId: number, version: number) =>
+    request<{ success: boolean }>(`/cash/transactions/${transactionId}/unverify`, {
+      method: 'PUT',
+      body: { version },
+    }),
 };
 
 export const dashboardApi = {
@@ -210,9 +349,9 @@ export const dashboardApi = {
 
 // Create APIs
 export const contactsApi = {
-  create: (data: { name: string; phone?: string; contact_person?: string; wechat?: string; qq?: string }) =>
+  create: (data: { name: string; phone?: string; contact_person?: string; wechat?: string; qq?: string; contact_type?: 'customer' | 'supplier' | 'both' }) =>
     request<LookupEntry>('/contacts', { method: 'POST', body: data }),
-  update: (id: number, data: { name: string; contact_person?: string; phone?: string; wechat?: string; qq?: string }) =>
+  update: (id: number, data: { name: string; contact_person?: string; phone?: string; wechat?: string; qq?: string; contact_type?: 'customer' | 'supplier' | 'both' }) =>
     request<LookupEntry>(`/contacts/${id}`, { method: 'PUT', body: data }),
   delete: (id: number) =>
     request<{ success: boolean }>(`/contacts/${id}`, { method: 'DELETE' }),

@@ -24,9 +24,10 @@ class LookupService {
 
   /**
    * Get all contacts for lookup
+   * @param {string} contactType - Filter by contact type: 'customer', 'supplier', or null for all
    */
-  async getContacts() {
-    return await contactRepository.findAllForLookup();
+  async getContacts(contactType = null) {
+    return await contactRepository.findAllForLookup(contactType);
   }
 }
 

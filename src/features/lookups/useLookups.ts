@@ -9,7 +9,7 @@ import { queryKeys } from '@/lib/queryKeys';
 import { ProductLookup, ContactLookup, SearchItem } from './types';
 import { localSearch } from './localSearch';
 
-export function useLookups() {
+export function useLookups(contactType?: 'customer' | 'supplier') {
   const { data: productsData, isLoading: productsLoading } = useQuery({
     queryKey: queryKeys.lookups.products,
     queryFn: lookupApi.getProducts,
@@ -17,8 +17,8 @@ export function useLookups() {
   });
 
   const { data: contactsData, isLoading: contactsLoading } = useQuery({
-    queryKey: queryKeys.lookups.contacts,
-    queryFn: lookupApi.getContacts,
+    queryKey: contactType ? [...queryKeys.lookups.contacts, contactType] : queryKeys.lookups.contacts,
+    queryFn: () => lookupApi.getContacts(contactType),
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
 
@@ -102,8 +102,8 @@ export function useProductSearch(initialQuery = '') {
 }
 
 // Contact search hook with local fuzzy matching
-export function useContactSearch(initialQuery = '') {
-  const { contacts, isLoading } = useLookups();
+export function useContactSearch(initialQuery = '', contactType?: 'customer' | 'supplier') {
+  const { contacts, isLoading } = useLookups(contactType);
   const [query, setQuery] = useState(initialQuery);
   const debouncedQuery = useDebounce(query, 200);
 

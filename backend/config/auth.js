@@ -55,7 +55,7 @@ const config = {
     options: {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax', // 开发环境使用 lax
       path: '/',
     },
     // 访问令牌 Cookie 最大年龄 (毫秒)
