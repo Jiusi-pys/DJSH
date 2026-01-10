@@ -277,6 +277,12 @@ export interface CashTransaction {
     category: string;
     contact_name: string;
     remark: string;
+    cancelled: boolean;
+    cancelled_reason: string;
+    cancelled_at: string | null;
+    verified: boolean;
+    verified_at: string | null;
+    version: number;
   };
 }
 
@@ -308,7 +314,7 @@ export const cashApi = {
   getBalance: () => request<{ balance: number }>('/cash/balance'),
   getTransactions: (params?: { type?: string; date_from?: string; date_to?: string; page?: number; page_size?: number }) =>
     request<CashTransactionsResponse>('/cash/transactions', { params }),
-  create: (data: { trans_type: 'income' | 'expense'; amount: number; category?: string; trans_date?: string; remark?: string }) =>
+  create: (data: { trans_type: 'income' | 'expense'; amount: number; category?: string; trans_date?: string; remark?: string; contact_id?: number }) =>
     request<CashTransaction>('/cash/transactions', { method: 'POST', body: data }),
   uploadImage: (transactionId: number, data: { image_data: string; mime_type: string }) =>
     request<ImageUploadResponse>(`/cash/transactions/${transactionId}/images`, {

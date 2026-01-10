@@ -74,12 +74,12 @@ export default function ContactsPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['lookups', 'contacts'] });
       setDialogOpen(false);
-      setFormData({ name: '', contact_person: '', phone: '', wechat: '', qq: '' });
+      setFormData({ name: '', contact_person: '', phone: '', wechat: '', qq: '', contact_type: 'customer' });
     },
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: number; data: { name: string; contact_person?: string; phone?: string; wechat?: string; qq?: string } }) =>
+    mutationFn: ({ id, data }: { id: number; data: { name: string; contact_person?: string; phone?: string; wechat?: string; qq?: string; contact_type?: 'customer' | 'supplier' | 'both' } }) =>
       contactsApi.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['lookups', 'contacts'] });

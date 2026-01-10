@@ -413,11 +413,12 @@ export default function CashPage() {
                         <CommandItem
                           key={contact.key.contact_id}
                           onSelect={() => {
-                            setFormData({ ...formData, contact });
-                            setContactOpen(false);
-                            setContactSearch('');
+                            if (!contact.display.is_disabled) {
+                              setFormData({ ...formData, contact });
+                              setContactOpen(false);
+                              setContactSearch('');
+                            }
                           }}
-                          disabled={contact.display.is_disabled}
                         >
                           <div className="flex flex-col">
                             <span className={contact.display.is_disabled ? 'text-muted-foreground' : ''}>
