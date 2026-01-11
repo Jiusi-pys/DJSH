@@ -5,9 +5,14 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "node server.js"
+    "dev": "node server.js",
+    "ocr:scan": "node cli/receipt-scanner.js",
+    "ocr:scan:dry": "node cli/receipt-scanner.js --dry-run",
+    "ocr:scan:debug": "node cli/receipt-scanner.js --debug",
+    "ocr:reset-stuck": "node cli/receipt-scanner.js --reset-stuck"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.24.0",
     "bcrypt": "^5.1.1",
     "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
@@ -15,6 +20,10 @@
     "express": "^4.18.2",
     "jsonwebtoken": "^9.0.2",
     "multer": "^2.0.2",
-    "mysql2": "^3.6.5"
+    "mysql2": "^3.6.5",
+    "openai": "^4.28.0",
+    "tesseract.js": "^5.0.4",
+    "winston": "^3.11.0",
+    "winston-daily-rotate-file": "^4.7.1"
   }
 }
