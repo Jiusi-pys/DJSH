@@ -1,0 +1,42 @@
+{
+  "rq_id": "rq_20260111_receipt_ocr_system",
+  "title": "Receipt OCR Batch Processing System for Automated Order Entry",
+  "description": "Design and implement a CLI-based system that processes receipt images from a folder, extracts Chinese text data using OCR+LLM, matches products against database using fuzzy matching, and creates orders via existing API",
+  "scope": {
+    "domain_constraints": [
+      "backend/",
+      "database/",
+      "src/types/",
+      "src/lib/"
+    ],
+    "key_areas": [
+      "Order creation API and data structures",
+      "Product matching and lookup patterns",
+      "Contact/supplier lookup patterns",
+      "Image handling and storage",
+      "Database schema for orders and products",
+      "API authentication and request patterns"
+    ],
+    "exclude_patterns": [
+      "node_modules",
+      "dist",
+      "*.test.ts",
+      ".next",
+      "DJSHiOS_*",
+      ".claude"
+    ]
+  },
+  "budgets": {
+    "max_sources": 50,
+    "max_claims": 25,
+    "max_agent_steps": 100
+  },
+  "requirements": {
+    "input": "Receipt images from folder repository",
+    "processing": "OCR + LLM extraction, fuzzy product matching",
+    "output": "Orders created via local API",
+    "validation": "User manual review via existing web UI"
+  },
+  "status": "in_progress",
+  "created_at": "2026-01-11T00:00:00Z"
+}

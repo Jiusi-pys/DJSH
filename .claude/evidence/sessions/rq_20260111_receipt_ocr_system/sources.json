@@ -1,0 +1,94 @@
+{
+  "sources": [
+    {
+      "source_id": "src_routes_orders",
+      "canonical_url": "file:///Users/jiusi/Documents/DJSH/backend/routes/orders.js",
+      "source_type": "codebase_file",
+      "quality_tier": "A"
+    },
+    {
+      "source_id": "src_ctrl_order",
+      "canonical_url": "file:///Users/jiusi/Documents/DJSH/backend/controllers/orderController.js",
+      "source_type": "codebase_file",
+      "quality_tier": "A"
+    },
+    {
+      "source_id": "src_svc_order",
+      "canonical_url": "file:///Users/jiusi/Documents/DJSH/backend/services/orderService.js",
+      "source_type": "codebase_file",
+      "quality_tier": "A"
+    },
+    {
+      "source_id": "src_repo_order",
+      "canonical_url": "file:///Users/jiusi/Documents/DJSH/backend/repositories/orderRepository.js",
+      "source_type": "codebase_file",
+      "quality_tier": "A"
+    },
+    {
+      "source_id": "src_repo_orderimg",
+      "canonical_url": "file:///Users/jiusi/Documents/DJSH/backend/repositories/orderImageRepository.js",
+      "source_type": "codebase_file",
+      "quality_tier": "A"
+    },
+    {
+      "source_id": "src_schema",
+      "canonical_url": "file:///Users/jiusi/Documents/DJSH/database/schema.sql",
+      "source_type": "codebase_file",
+      "quality_tier": "A"
+    },
+    {
+      "source_id": "src_apiclient",
+      "canonical_url": "file:///Users/jiusi/Documents/DJSH/src/lib/apiClient.ts",
+      "source_type": "codebase_file",
+      "quality_tier": "A"
+    },
+    {
+      "source_id": "src_errors",
+      "canonical_url": "file:///Users/jiusi/Documents/DJSH/backend/utils/errors/AppError.js",
+      "source_type": "codebase_file",
+      "quality_tier": "A"
+    },
+    {
+      "source_id": "src_repo_product",
+      "canonical_url": "file:///Users/jiusi/Documents/DJSH/backend/repositories/productRepository.js",
+      "source_type": "codebase_file",
+      "quality_tier": "A"
+    },
+    {
+      "source_id": "src_repo_contact",
+      "canonical_url": "file:///Users/jiusi/Documents/DJSH/backend/repositories/contactRepository.js",
+      "source_type": "codebase_file",
+      "quality_tier": "A"
+    },
+    {
+      "source_id": "src_routes_lookups",
+      "canonical_url": "file:///Users/jiusi/Documents/DJSH/backend/routes/lookups.js",
+      "source_type": "codebase_file",
+      "quality_tier": "A"
+    },
+    {
+      "source_id": "src_auth_provider",
+      "canonical_url": "file:///Users/jiusi/Documents/DJSH/src/lib/auth/AuthProvider.tsx",
+      "source_type": "codebase_file",
+      "quality_tier": "A"
+    },
+    {
+      "source_id": "src_types_auth",
+      "canonical_url": "file:///Users/jiusi/Documents/DJSH/src/types/auth.ts",
+      "source_type": "codebase_file",
+      "quality_tier": "A"
+    },
+    {
+      "source_id": "src_middleware_auth",
+      "canonical_url": "file:///Users/jiusi/Documents/DJSH/backend/middleware/auth.js",
+      "source_type": "codebase_file",
+      "quality_tier": "A"
+    },
+    {
+      "source_id": "src_env",
+      "canonical_url": "file:///Users/jiusi/Documents/DJSH/.env",
+      "source_type": "codebase_file",
+      "quality_tier": "B"
+    }
+  ]
+}
